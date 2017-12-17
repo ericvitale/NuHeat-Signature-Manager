@@ -204,11 +204,11 @@ private getSessionID() {
 
 /**Begin GET & POST Methods**********************************************************************/
 def getT() {
-    
+    //; charset=utf-8
     def params = [
         uri: "https://www.mynuheat.com",
 		path: "/api/thermostats?sessionid=${getSessionID()}",
-        headers: ["Content-Type": "application/json; charset=utf-8", "Connection" : "close"]
+        headers: ["Content-Type": "application/json", "Accept": "application/json", "Connection" : "close"]
     ]
     
     asynchttp_v1.get('getResponseHandler', params)
@@ -217,6 +217,7 @@ def getT() {
 def getResponseHandler(response, data) {
 
 	log("RESPONSE = ${response.getStatus()}.", "DEBUG")
+    log("DATA = ${data}.", "DEBUG")
 
     if(response.getStatus() == 200 || response.getStatus() == 207) {
 		log("Response received from NuHeat in the getReponseHandler.", "DEBUG")
@@ -284,3 +285,70 @@ def log(data, type) {
 }
 
 /************ End Logging Methods *********************************************************/
+
+/**Begin GET & POST Methods**********************************************************************/
+
+private nuheatGet(url, value_map) {    
+	log("Sending a GET to NuHeat.", "DEBUG")
+    
+    log("URL = ${url}", "INFO")
+   
+    def params = [uri: url, body: value_map]
+    
+    try {
+		httpGet(params) { resp ->
+			log("Response: ${resp}.", "TRACE")
+
+            resp.headers.each {
+               log("header ${it.name} : ${it.value}", "TRACE")
+            }
+
+            log("response contentType: ${resp.contentType}", "TRACE")
+            log("response data: ${resp.data}", "TRACE")
+            
+            return resp.data
+        }
+    } catch (groovyx.net.http.HttpResponseException e) {
+    	log("User is not authenticated, authenticating.", "ERROR")
+        log("Exception: ${e.getMessage()}", "ERROR")
+        
+        if(e.getMessage() == "Unauthorized") {
+        	authenticateUser()
+        }
+        
+        return []
+    }
+}
+
+private nuheatPost(url, value_map) {
+
+	log("Sending a POST to NuHeat.", "DEBUG")
+   
+    def params = [uri: url, body: value_map]
+    
+    try {
+		httpPost(params) { resp ->
+			log("Response: ${resp}.", "TRACE")
+
+            resp.headers.each {
+               log("header ${it.name} : ${it.value}", "TRACE")
+            }
+
+            log("response contentType: ${resp.contentType}", "TRACE")
+            log("response data: ${resp.data}", "TRACE")
+            
+            return resp.data
+        }
+    } catch (groovyx.net.http.HttpResponseException e) {
+    	log("User is not authenticated, authenticating.", "ERROR")
+        log("Exception: ${e.getMessage()}", "ERROR")
+        
+        if(e.getMessage() == "Unauthorized") {
+        	authenticateUser()
+        }
+        
+        return []
+    }
+}
+
+/**End GET & POST Methods************************************************************************/
